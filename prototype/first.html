@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Prototype 1</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1 v-if="user"># WebSocket Prototype 1 ({{ user.name }})</h1>
+
+      <hr />
+      <article>
+        <h2>## User Information</h2>
+        <p v-if="user">{{ user }}</p>
+      </article>
+
+      <hr />
+      <article>
+        <h2>## Message</h2>
+
+        <section>
+          <h3>### Send Message</h3>
+          <input type="text" v-model="message" />
+          <button @click="sendMessage">Send</button>
+        </section>
+
+        <section>
+          <h3>### Received Message</h3>
+          <ul>
+            <li v-for="message in messages">{{ message }}</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>### Message Between 2 Users</h3>
+          <button @click="getConversation">Get Conversation</button>
+          <ul>
+            <li v-for="message in conversation" :key="message.id">
+              {{ message }}
+            </li>
+          </ul>
+        </section>
+      </article>
+
+      <hr />
+      <article>
+        <h2>## Users</h2>
+        <section>
+          <h3>### All Users</h3>
+          <button @click="getUsers">Get Users</button>
+          <ul>
+            <li v-for="user in users" :key="user.id">
+              <input
+                :id="user.id"
+                :value="user.id"
+                type="radio"
+                v-model="selectedUser"
+              />
+              <label :for="user.id">{{ user }}</label>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h3>### Selected User ID</h3>
+          <p>{{ selectedUser }}</p>
+        </section>
+      </article>
+    </div>
+
+    <script type="module">
+      import {
+        createApp,
+        ref,
+        onMounted,
+      } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
+
+      createApp({
+        setup() {
+          const token = ref(
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImthcHRlbndhaHl1QGdtYWlsLmNvbSIsImlkIjoyLCJuYW1lIjoid2FoeXUifQ.PuGzH4yojnlLQzG_d_J-GJm14PaCCynMgcgCs-3gcH8"
+          );
+          const message = ref(""); // message to send
+          const messages = ref([]); // received messages
+          const users = ref([]); // all users except the current user
+          const user = ref(null); // current user
+          const conversation = ref([]); // conversation between 2 users
+          const selectedUser = ref(1); // selected user to send message
+          const socket = new WebSocket("ws://localhost:8080/ws");
+
+          socket.onopen = () => {
+            socket.send(token.value);
+            console.log("Connected to the server");
+          };
+
+          socket.onclose = () => {
+            console.log("Disconnected from the server");
+          };
+
+          socket.onmessage = (event) => {
+            console.log("new message", event.data);
+            getAllMessages();
+          };
+
+          function sendMessage() {
+            socket.send(
+              JSON.stringify({
+                content: message.value,
+                sender_id: Number(user.value.id),
+                receiver_id: Number(selectedUser.value),
+              })
+            );
+
+            message.value = "";
+          }
+
+          function getUsers() {
+            fetch("http://localhost:8080/users", {
+              headers: {
+                Authorization: token.value,
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                users.value = data;
+              });
+          }
+
+          function getUser() {
+            fetch(`http://localhost:8080/user`, {
+              headers: {
+                Authorization: token.value,
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                user.value = data;
+              });
+          }
+
+          function getConversation() {
+            fetch(
+              `http://localhost:8080/conversation?receiver_id=${selectedUser.value}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: token.value,
+                },
+              }
+            )
+              .then((response) => response.json())
+              .then((data) => {
+                conversation.value = data;
+              });
+          }
+
+          function getAllMessages() {
+            fetch(`http://localhost:8080/allmessages`, {
+              method: "POST",
+              headers: {
+                Authorization: token.value,
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                messages.value = data;
+              });
+          }
+
+          onMounted(() => {
+            getUser();
+          });
+
+          return {
+            token,
+            message,
+            messages,
+            users,
+            user,
+            conversation,
+            selectedUser,
+            getUsers,
+            getConversation,
+            sendMessage,
+          };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
