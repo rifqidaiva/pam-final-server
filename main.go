@@ -46,9 +46,9 @@ func init() {
         name TEXT
     );
 
-    INSERT INTO users (email, password, name) VALUES ("admin@gmail.com", "admin", "Admin");
-	INSERT INTO users (email, password, name) VALUES ("kaptenwahyu@gmail.com", "wahyu", "wahyu");
-	INSERT INTO users (email, password, name) VALUES ("aiken@gmail.com", "aiken", "aiken");
+    INSERT INTO users (email, password, name) VALUES ("admin@gmail.com", "$2a$10$4xlitCzDl444z16xQVBaEupzQY0/wv6sqEeN6mkYqfdnS5DBnqbaq", "admin");
+    INSERT INTO users (email, password, name) VALUES ("kaptenwahyu@gmail.com", "$2a$10$KWFFkJd9XiFXFfYBPhr8D.dUTRcgVRQX/JjSub2lA1itmz5hBv0EO", "wahyu");
+    INSERT INTO users (email, password, name) VALUES ("aiken@gmail.com", "$2a$10$3LnGFUOy6i4ehr9NuDI9r.GdVf3pM7gcRbfqI/K9aZjc7GrHq7KSi", "aiken");
     
 	CREATE TABLE IF NOT EXISTS messages (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

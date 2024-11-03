@@ -59,9 +59,15 @@ func loginEndpoint(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var user User
-	err = db.QueryRow("SELECT id, email, password, name FROM users WHERE email = ? AND password = ?", email, password).
+	err = db.QueryRow("SELECT id, email, password, name FROM users WHERE email = ?", email).
 		Scan(&user.ID, &user.Email, &user.Password, &user.Name)
 	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "email or password is incorrect"}`))
+		return
+	}
+
+	if !checkPasswordHash(password, user.Password) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"message": "email or password is incorrect"}`))
 		return
@@ -137,7 +143,9 @@ func registerEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("INSERT INTO users (email, password, name) VALUES (?, ?, ?)", email, password, name)
+	passwordHash := hashPassword(password)
+
+	_, err = db.Exec("INSERT INTO users (email, password, name) VALUES (?, ?, ?)", email, passwordHash, name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"message": "` + err.Error() + `"}`))
