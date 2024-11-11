@@ -12,9 +12,9 @@ func main() {
 	mux.HandleFunc("/login", loginEndpoint)               // Login endpoint (POST)
 	mux.HandleFunc("/register", registerEndpoint)         // Register endpoint (POST)
 	mux.HandleFunc("/users", usersEndpoint)               // Get all users except the current user (GET)
-	mux.HandleFunc("/user", userEndpoint)                 // Get current user (GET)
+	mux.HandleFunc("/user", userEndpoint)                 // Get the user by id if provided in the query or the current user (GET)
 	mux.HandleFunc("/conversation", conversationEndpoint) // Get conversation between current user and another user (POST)
-	mux.HandleFunc("/allmessages", allMessagesEndpoint)   // Get all messages between current user and another user (POST)
+	mux.HandleFunc("/allmessages", allMessagesEndpoint)   // Get all messages of a user (POST)
 	mux.HandleFunc("/ws", wsEndpoint)                     // Websocket endpoint
 
 	// Serve static HTML files at /prototype

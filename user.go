@@ -210,7 +210,7 @@ func usersEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 // MARK: /user
-// userEndpoint is a handler function to get the current user
+// userEndpoint is a handler function to get the user by id if provided in the query or the current user
 func userEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -226,6 +226,26 @@ func userEndpoint(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"message": "` + err.Error() + `"}`))
 		return
+	}
+
+	// Get user by id if provided in the query
+	id := r.URL.Query().Get("id")
+	if id != "" {
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"message": "` + err.Error() + `"}`))
+			return
+		}
+
+		defer db.Close()
+
+		err = db.QueryRow("SELECT id, email, name FROM users WHERE id = ?", id).Scan(&user.ID, &user.Email, &user.Name)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"message": "user not found"}`))
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
